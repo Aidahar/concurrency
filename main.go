@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"os"
+	"sync"
 	"time"
 )
 
@@ -60,7 +61,8 @@ func generateLogs(count int) []logItem {
 	return logs
 }
 
-func saveUserInfo(user User) error {
+func saveUserInfo(user User, wg *sync.WaitGroup) error {
+	time.Sleep(time.Millisecond * 10)
 	fmt.Printf("WRITING FILE FOR USER ID: %d\n", user.id)
 
 	filename := fmt.Sprintf("logs/uid_%d.txt", user.id)
@@ -71,15 +73,29 @@ func saveUserInfo(user User) error {
 	}
 
 	_, err = file.WriteString(user.getActivityInfo())
-	return err
+
+	if err != nil {
+		return err
+	}
+
+	wg.Done()
+
+	return nil
 }
 
 func main() {
 	rand.Seed(time.Now().Unix())
 
+	t := time.Now()
+
+	wg := &sync.WaitGroup{}
+
 	users := generateUsers(1000)
 
 	for _, user := range users {
-		saveUserInfo(user)
+		wg.Add(1)
+		go saveUserInfo(user, wg)
 	}
+	wg.Wait()
+	fmt.Println("TIME ELAPSED:", time.Since(t))
 }
