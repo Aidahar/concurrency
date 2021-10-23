@@ -62,20 +62,6 @@ func saveUserInfo(user User, wg *sync.WaitGroup) error {
 	time.Sleep(time.Nanosecond * 10)
 	fmt.Printf("WRITING FILE FOR USER ID: %d\n", user.id)
 
-	/*
-		filename := fmt.Sprintf("logs/uid_%d.txt", user.id)
-
-		file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
-		if err != nil {
-			return err
-		}
-
-		_, err = file.WriteString(user.getActivityInfo())
-
-		if err != nil {
-			return err
-		}*/
-
 	wg.Done()
 
 	return nil
