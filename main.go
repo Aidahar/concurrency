@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"sync"
 	"time"
 )
@@ -35,17 +34,15 @@ func (u *User) getActivityInfo() string {
 	return out
 }
 
-func generateUsers(count int) []User {
-	users := make([]User, count)
-
+func generateUsers(count int, users chan User) {
 	for i := 0; i < count; i++ {
-		users[i] = User{
+		users <- User{
 			id:    i + 1,
 			email: fmt.Sprintf("user%d@ninja.go", i+1),
 			logs:  generateLogs(rand.Intn(1000)),
 		}
 	}
-	return users
+	close(users)
 }
 
 func generateLogs(count int) []logItem {
@@ -62,21 +59,22 @@ func generateLogs(count int) []logItem {
 }
 
 func saveUserInfo(user User, wg *sync.WaitGroup) error {
-	time.Sleep(time.Millisecond * 10)
+	time.Sleep(time.Nanosecond * 10)
 	fmt.Printf("WRITING FILE FOR USER ID: %d\n", user.id)
 
-	filename := fmt.Sprintf("logs/uid_%d.txt", user.id)
+	/*
+		filename := fmt.Sprintf("logs/uid_%d.txt", user.id)
 
-	file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
-	if err != nil {
-		return err
-	}
+		file, err := os.OpenFile(filename, os.O_RDWR|os.O_CREATE, 0644)
+		if err != nil {
+			return err
+		}
 
-	_, err = file.WriteString(user.getActivityInfo())
+		_, err = file.WriteString(user.getActivityInfo())
 
-	if err != nil {
-		return err
-	}
+		if err != nil {
+			return err
+		}*/
 
 	wg.Done()
 
@@ -90,9 +88,10 @@ func main() {
 
 	wg := &sync.WaitGroup{}
 
-	users := generateUsers(1000)
+	users := make(chan User)
+	go generateUsers(1000, users)
 
-	for _, user := range users {
+	for user := range users {
 		wg.Add(1)
 		go saveUserInfo(user, wg)
 	}
